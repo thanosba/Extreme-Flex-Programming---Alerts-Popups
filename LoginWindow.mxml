@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx" width="250" height="175" title="Login Form" close="closeHandler(event)" x="50" y="50">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+
+			private function closeHandler(event:CloseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+
+			private function submitHandler(event:MouseEvent):void
+			{
+				// Validate credentials:
+				if ((username.text == 'test') && (password.text == 'test') ) {
+					// Logged in!
+					PopUpManager.removePopUp(this);
+				} else {
+					Alert.show('Invalid credentials! Please try again.', 'Error');
+				}
+			}
+
+		]]>
+	</fx:Script>
+	<mx:Form horizontalCenter="0" top="10">
+		<mx:FormHeading label="Enter Credentials"/>
+		<mx:FormItem label="Username">
+			<s:TextInput id="username"/>
+		</mx:FormItem>
+		<mx:FormItem label="Password">
+			<s:TextInput id="password"/>
+		</mx:FormItem>
+		<mx:FormItem>
+			<s:Button id="submitButton" label="Submit" click="submitHandler(event)"/>
+		</mx:FormItem>
+	</mx:Form>
+</s:TitleWindow>

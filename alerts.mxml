@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx">
+
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.validators.Validator;
+
+			private var updateState:Boolean = false;
+
+			private function inStockColumnLabeler(item:Object, column:DataGridColumn):String {
+				if (item.inStock == 1) {
+					return 'Yes';
+				} else {
+					return 'No';
+				}
+			}
+
+			private function productsService_faultHandler(event:FaultEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+
+			private function updateButton_clickHandler(event:MouseEvent):void
+			{
+				if (productsDG.selectedIndex > -1) {
+					productName.text = productsDG.selectedItem.name;
+					productPrice.text = productsDG.selectedItem.price;
+					if (productsDG.selectedItem.inStock == 1) {
+						productInStock.selected = true;
+					} else {
+						productInStock.selected = false;
+					}
+					updateState = true;
+				}
+			}
+
+			private function deleteButton_clickHandler(event:MouseEvent):void
+			{
+				if (productsDG.selectedIndex > -1) {
+					Alert.show('Are you sure you want to permanently delete product #' + productsDG.selectedItem.id +'?', 'Confirm Deletion', Alert.YES|Alert.NO, this, deleteAlertHandler, null, Alert.NO);
+				}
+			}
+
+			private function deleteAlertHandler(event:CloseEvent):void {
+				if (event.detail == Alert.YES) {
+					productsService.deleteProduct(productsDG.selectedItem.id);
+				}
+			}
+
+			private function saveButton_clickHandler(event:MouseEvent):void
+			{
+				var vr:Array = Validator.validateAll([nameValidator, priceValidator]);
+				if (vr.length == 0) {
+					var item:Object = new Object();
+					item.name = productName.text;
+					item.price = productPrice.text;
+					if (productInStock.selected) {
+						item.inStock = 1;
+					} else {
+						item.inStock = 0;
+					}
+
+					if (updateState) {
+						item.id = productsDG.selectedItem.id;
+						productsService.updateProduct(item);
+					} else {
+						productsService.createProduct(item);
+					}
+				}
+			}
+
+			private function handleUpdateProduct(event:ResultEvent):void {
+				messageLabel.text = 'The product has been updated.';
+				productsService.getAllProducts();
+				updateState = false;
+				clearForm();
+			}
+
+			private function handleDeleteProduct(event:ResultEvent):void {
+				messageLabel.text = 'The product has been deleted.';
+				productsService.getAllProducts();
+
+			}
+
+			private function handleCreateProduct(event:ResultEvent):void {
+				messageLabel.text = 'The product (#' + event.result + ') has been added.';
+				productsService.getAllProducts();
+				clearForm();
+			}
+
+			private function clearForm():void {
+				priceValidator.enabled = false;
+				nameValidator.enabled = false;
+				productName.text = '';
+				productPrice.text = '';
+				productInStock.selected = false;
+				priceValidator.enabled = true;
+				nameValidator.enabled = true;
+			}
+
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<s:RemoteObject id="productsService" destination="amfphp" source="ProductsService" showBusyCursor="true"
+						fault="productsService_faultHandler(event)"
+						endpoint="http://localhost:8888/flex4ch09/flashservices/gateway.php">
+			<s:method name="getAllProducts" />
+			<s:method name="updateProduct" result="handleUpdateProduct(event)" />
+			<s:method name="createProduct" result="handleCreateProduct(event)" />
+			<s:method name="deleteProduct" result="handleDeleteProduct(event)" />
+		</s:RemoteObject>
+		<mx:NumberValidator id="priceValidator" minValue=".01" source="{productPrice}" property="text" />
+		<mx:StringValidator id="nameValidator" minLength="3" maxLength="60" source="{productName}" property="text" />
+	</fx:Declarations>
+	<s:HGroup paddingLeft="10" paddingTop="10" gap="30" width="90%" horizontalAlign="center">
+		<s:VGroup gap="10">
+
+			<mx:DataGrid id="productsDG" dataProvider="{productsService.getAllProducts.lastResult}" creationComplete="productsService.getAllProducts()">
+				<mx:columns>
+					<mx:DataGridColumn headerText="ID" dataField="id"/>
+					<mx:DataGridColumn headerText="Name" dataField="name"/>
+					<mx:DataGridColumn headerText="Price" dataField="price"/>
+					<mx:DataGridColumn headerText="In Stock?" dataField="inStock" labelFunction="inStockColumnLabeler"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<s:Button label="Update Selected Product" id="updateButton" click="updateButton_clickHandler(event)"/>
+			<s:Button label="Delete Selected Product" id="deleteButton" click="deleteButton_clickHandler(event)"/>
+		</s:VGroup>
+		<mx:Form>
+			<s:Label id="messageLabel" color="#49B42C" fontSize="16" fontWeight="bold"/>
+			<mx:FormItem label="Name">
+				<s:TextInput id="productName"/>
+			</mx:FormItem>
+			<mx:FormItem label="Price">
+				<s:TextInput id="productPrice"/>
+			</mx:FormItem>
+			<mx:FormItem label="In Stock?">
+				<s:CheckBox id="productInStock"/>
+			</mx:FormItem>
+			<s:Button label="Save Product" id="saveButton" click="saveButton_clickHandler(event)"/>
+		</mx:Form>
+	</s:HGroup>
+</s:Application>

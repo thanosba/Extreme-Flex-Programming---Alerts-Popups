@@ -1,5 +1,7 @@
 # Extreme-Flex-Programming---Alerts-Popups
-This tutorial is meant for software professionals who would like to learn Flex Programming in simple and easy steps.
+
+
+Flex Programming in simple and easy steps
 
 ->More detailed:
 
